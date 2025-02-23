@@ -1,0 +1,29 @@
+---
+- name: Gather system information
+  hosts: localhost
+  become: yes
+  tasks:
+    - name: Gather memory usage
+      command: free -m
+      register: memory_usage
+
+    - name: Print memory usage
+      debug:
+        var: memory_usage.stdout_lines
+
+    - name: Gather disk usage
+      command: df -h
+      register: disk_usage
+
+    - name: Print disk usage
+      debug:
+        var: disk_usage.stdout_lines
+
+    - name: Gather CPU details
+      command: lscpu
+      register: cpu_info
+
+    - name: Print CPU details
+      debug:
+        var: cpu_info.stdout_lines
+
