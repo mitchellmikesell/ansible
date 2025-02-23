@@ -1,0 +1,14 @@
+---
+- name: List running services
+  hosts: localhost, all
+  gather_facts: true
+
+  tasks:
+    - name: List running services
+      shell: systemctl list-units --type=service --state=running
+      register: running_services
+
+    - name: Print running services
+      debug:
+        var: running_services.stdout_lines
+
