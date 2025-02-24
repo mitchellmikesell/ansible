@@ -1,29 +1,60 @@
 ---
 - name: Gather system information
   hosts: localhost
-  become: yes
+  gather_facts: yes
   tasks:
+
+    - name: Check user ID
+      ansible.builtin.command: id -u
+      register: result
+
+    - name: Print if root
+      ansible.builtin.debug:
+        msg: "Running as root" 
+      when: result.stdout == "0"
+
+    - name: Print if not root
+      ansible.builtin.debug:
+        msg: "Not running as root"
+      when: result.stdout != "0"
+
+    - name: Read the file
+      ansible.builtin.slurp:
+        src: /etc/redhat-release
+      register: redhat_release_content
+
+    - name: Decode the file content
+      ansible.builtin.set_fact:
+        redhat_release_decoded: "{{ redhat_release_content.content | b64decode }}"
+
+    - name: Print the file content
+      ansible.builtin.debug:
+        msg: "Content of /etc/redhat-release: {{ redhat_release_decoded }}"
+
     - name: Gather memory usage
-      command: free -m
+      ansible.builtin.command: free -m
       register: memory_usage
 
     - name: Print memory usage
-      debug:
+      ansible.builtin.debug:
         var: memory_usage.stdout_lines
 
     - name: Gather disk usage
-      command: df -h
+      ansible.builtin.command: df -h
       register: disk_usage
 
     - name: Print disk usage
-      debug:
+      ansible.builtin.debug:
         var: disk_usage.stdout_lines
 
     - name: Gather CPU details
-      command: lscpu
+      ansible.builtin.command: lscpu
       register: cpu_info
 
     - name: Print CPU details
-      debug:
+      ansible.builtin.debug:
         var: cpu_info.stdout_lines
 
+    - name: Print CPUS
+      ansible.builtin.debug:
+        msg: "CPUs: {{ ansible_facts['processor_vcpus'] }}"
