@@ -23,6 +23,20 @@
         src: /etc/redhat-release
       register: redhat_release_content
 
+    - name: check for virt-what
+      ansible.builtin.stat
+        path: /usr/sbin/virt-what
+      register: have_virtwhat
+
+    - name: Print virtwhat
+      debug:
+        msg: "virtwhat exists: {{ have_virtwhat }}"
+        
+    - name: What am i
+      ansible.builtin.command virt-what
+      register: vwhat
+
+
     - name: Decode the file content
       ansible.builtin.set_fact:
         redhat_release_decoded: "{{ redhat_release_content.content | b64decode }}"
