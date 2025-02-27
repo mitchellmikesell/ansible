@@ -1,100 +1,102 @@
 ---
 - name: Gather system information
   hosts: localhost
-  become: yes
-  gather_facts: yes
+  gather_facts: true
   tasks:
-    #- name: Print the facts just the facts maam
-    #  ansible.builtin.debug:
-    #    var: ansible_facts
-    #    msg: 
-    #      - "virtualization tech guest: {{ ansible_facts.virtualization_tech_guest }}"
-    #      - "virtualization tech host: {{ ansible_facts.virtualization_tech_host }}"
-    #      - "virtualization type: {{ ansible_facts.virtualization_type }}"
+    # - name: Print the facts just the facts maam
+    #   ansible.builtin.debug:
+    #     var: ansible_facts
+    #     msg:
+    #       - "virtualization tech guest: {{ ansible_facts.virtualization_tech_guest }}"
+    #       - "virtualization tech host: {{ ansible_facts.virtualization_tech_host }}"
+    #       - "virtualization type: {{ ansible_facts.virtualization_type }}"
 
     - name: Set output variable
       ansible.builtin.set_fact:
-          my_messages: ['===========================================================',
-                        '      hostname: {{ ansible_hostname }}',
-                        '    ip address: {{ ansible_default_ipv4.address if ansible_default_ipv4.address is defined else "" }}',
-                        '  distribution: {{ ansible_facts.distribution }} 
-                                       {{ ansible_facts.system }} 
+        system_info: ['===========================================================',
+                      '      hostname: {{ ansible_hostname }}',
+                      '    ip address: {{ ansible_default_ipv4.address if ansible_default_ipv4.address is defined else "" }}',
+                      '  distribution: {{ ansible_facts.distribution }}
+                                       {{ ansible_facts.system }}
                                        Release {{ ansible_facts.distribution_version }}
                                        ({{ ansible_facts.distribution_release }})',
-                        '      hostname: {{ ansible_facts.hostname }} {{ ansible_facts.fqdn }}',
-                        '     processor: {{ ansible_facts.processor[2] }}  
-                                    cores({{ ansible_facts.processor_vcpus }})',
-                        '{% if ansible_facts.virtualization_type is defined %}Virtualization: 
+                      '      hostname: {{ ansible_facts.hostname }} {{ ansible_facts.fqdn }}',
+                      '     processor: {{ ansible_facts.processor[2] }}
+                                       cores({{ ansible_facts.processor_vcpus }})',
+                      '{% if ansible_facts.virtualization_type is defined %}Virtualization:
                                     {{ ansible_facts.virtualization_type }}{% endif %}']
 
     - name: Check user ID
       ansible.builtin.command: id -u
       register: result
+      changed_when: false
 
-    #- name: Print if root
-    #  ansible.builtin.set_fact:
-    #    my_messages: "{{ my_messages + ['Running as root'] }}"
-    #  when: result.stdout == "0"
+    # - name: Print if root
+    #   ansible.builtin.set_fact:
+    #     system_info: "{{ system_info + ['Running as root'] }}"
+    #   when: result.stdout == "0"
 
-    #- name: Print if not root
-    #  ansible.builtin.set_fact:
-    #    my_messages: "{{ my_messages + ['Not running as root']}}" 
-    #  when: result.stdout != "0"
+    # - name: Print if not root
+    #   ansible.builtin.set_fact:
+    #     system_info: "{{ system_info + ['Not running as root']}}"
+    #   when: result.stdout != "0"
 
-    #- name: Read the file
-    #  ansible.builtin.slurp:
-    #    src: /etc/redhat-release
-    #  register: redhat_release_content
+    # - name: Read the file
+    #   ansible.builtin.slurp:
+    #     src: /etc/redhat-release
+    #   register: redhat_release_content
 
-    #- name: Decode the file content
-    #  ansible.builtin.set_fact:
-    #    redhat_release_decoded: ["Linux Release: {{ redhat_release_content.content | b64decode }}"]
+    # - name: Decode the file content
+    #   ansible.builtin.set_fact:
+    #     redhat_release_decoded: ["Linux Release: {{ redhat_release_content.content | b64decode }}"]
 
-    #- name: Print the file content
-    #  ansible.builtin.set_fact:
-    #    my_messages: "{{ my_messages + redhat_release_decoded }}" 
+    # - name: Print the file content
+    #   ansible.builtin.set_fact:
+    #     system_info: "{{ system_info + redhat_release_decoded }}"
 
-    #- name: "check for virt-what"
-    #  ansible.builtin.stat:
-    #    path: "/usr/sbin/virt-what"
-    #  register: have_virtwhat
+    # - name: "check for virt-what"
+    #   ansible.builtin.stat:
+    #     path: "/usr/sbin/virt-what"
+    #   register: have_virtwhat
 
-    #- name: Load environment
-    #  when:
-    #    have_virtwhat.stat.exists
-    #  block:
-    #    - name: What am i
-    #      ansible.builtin.command: "virt-what"
-    #      register: vwhat
-        
-    #    - name: print output from virtwhat
-    #      ansible.builtin.set_fact:
-    #        vwhat_r: "Running on: {{ vwhat.stdout | replace('\n', ' ')}}"
+    # - name: Load environment
+    #   when:
+    #     have_virtwhat.stat.exists
+    #   block:
+    #     - name: What am i
+    #       ansible.builtin.command: "virt-what"
+    #       register: vwhat
 
-    #   - name: Print what I am
-    #      ansible.builtin.set_fact:
-    #        my_messages: "{{ my_messages + [vwhat_r] }}" 
+    #     - name: print output from virtwhat
+    #       ansible.builtin.set_fact:
+    #         vwhat_r: "Running on: {{ vwhat.stdout | replace('\n', ' ')}}"
+
+    #     - name: Print what I am
+    #       ansible.builtin.set_fact:
+    #         system_info: "{{ system_info + [vwhat_r] }}"
 
     - name: Gather memory usage
       ansible.builtin.command: free -m
       register: memory_usage
+      changed_when: false
 
-    #- name: Print memory usage
-    #  ansible.builtin.debug:
-    #    var: memory_usage.stdout_lines
+    # - name: Print memory usage
+    #   ansible.builtin.debug:
+    #     var: memory_usage.stdout_lines
 
     - name: Gather disk usage
       ansible.builtin.command: df -h
       register: disk_usage
+      changed_when: false
 
-    #- name: Print disk usage
-    #  ansible.builtin.debug:
-    #    var: disk_usage.stdout_lines
+    # - name: Print disk usage
+    #   ansible.builtin.debug:
+    #     var: disk_usage.stdout_lines
 
     - name: Add bottom banner
       ansible.builtin.set_fact:
-        my_messages: "{{ my_messages + ['==========================================================='] }}"
+        system_info: "{{ system_info + ['==========================================================='] }}"
 
     - name: Print messages
       ansible.builtin.debug:
-        var: my_messages
+        var: system_info
