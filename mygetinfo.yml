@@ -1,74 +1,100 @@
 ---
 - name: Gather system information
   hosts: localhost
+  become: yes
   gather_facts: yes
   tasks:
+    #- name: Print the facts just the facts maam
+    #  ansible.builtin.debug:
+    #    var: ansible_facts
+    #    msg: 
+    #      - "virtualization tech guest: {{ ansible_facts.virtualization_tech_guest }}"
+    #      - "virtualization tech host: {{ ansible_facts.virtualization_tech_host }}"
+    #      - "virtualization type: {{ ansible_facts.virtualization_type }}"
+
+    - name: Set output variable
+      ansible.builtin.set_fact:
+          my_messages: ['===========================================================',
+                        '      hostname: {{ ansible_hostname }}',
+                        '    ip address: {{ ansible_default_ipv4.address if ansible_default_ipv4.address is defined else "" }}',
+                        '  distribution: {{ ansible_facts.distribution }} 
+                                       {{ ansible_facts.system }} 
+                                       Release {{ ansible_facts.distribution_version }}
+                                       ({{ ansible_facts.distribution_release }})',
+                        '      hostname: {{ ansible_facts.hostname }} {{ ansible_facts.fqdn }}',
+                        '     processor: {{ ansible_facts.processor[2] }}  
+                                    cores({{ ansible_facts.processor_vcpus }})',
+                        '{% if ansible_facts.virtualization_type is defined %}Virtualization: 
+                                    {{ ansible_facts.virtualization_type }}{% endif %}']
 
     - name: Check user ID
       ansible.builtin.command: id -u
       register: result
 
-    - name: Print if root
-      ansible.builtin.debug:
-        msg: "Running as root" 
-      when: result.stdout == "0"
+    #- name: Print if root
+    #  ansible.builtin.set_fact:
+    #    my_messages: "{{ my_messages + ['Running as root'] }}"
+    #  when: result.stdout == "0"
 
-    - name: Print if not root
-      ansible.builtin.debug:
-        msg: "Not running as root"
-      when: result.stdout != "0"
+    #- name: Print if not root
+    #  ansible.builtin.set_fact:
+    #    my_messages: "{{ my_messages + ['Not running as root']}}" 
+    #  when: result.stdout != "0"
 
-    - name: Read the file
-      ansible.builtin.slurp:
-        src: /etc/redhat-release
-      register: redhat_release_content
+    #- name: Read the file
+    #  ansible.builtin.slurp:
+    #    src: /etc/redhat-release
+    #  register: redhat_release_content
 
-    - name: check for virt-what
-      ansible.builtin.stat
-        path: /usr/sbin/virt-what
-      register: have_virtwhat
+    #- name: Decode the file content
+    #  ansible.builtin.set_fact:
+    #    redhat_release_decoded: ["Linux Release: {{ redhat_release_content.content | b64decode }}"]
 
-    - name: Print virtwhat
-      debug:
-        msg: "virtwhat exists: {{ have_virtwhat }}"
+    #- name: Print the file content
+    #  ansible.builtin.set_fact:
+    #    my_messages: "{{ my_messages + redhat_release_decoded }}" 
+
+    #- name: "check for virt-what"
+    #  ansible.builtin.stat:
+    #    path: "/usr/sbin/virt-what"
+    #  register: have_virtwhat
+
+    #- name: Load environment
+    #  when:
+    #    have_virtwhat.stat.exists
+    #  block:
+    #    - name: What am i
+    #      ansible.builtin.command: "virt-what"
+    #      register: vwhat
         
-    - name: What am i
-      ansible.builtin.command virt-what
-      register: vwhat
+    #    - name: print output from virtwhat
+    #      ansible.builtin.set_fact:
+    #        vwhat_r: "Running on: {{ vwhat.stdout | replace('\n', ' ')}}"
 
-
-    - name: Decode the file content
-      ansible.builtin.set_fact:
-        redhat_release_decoded: "{{ redhat_release_content.content | b64decode }}"
-
-    - name: Print the file content
-      ansible.builtin.debug:
-        msg: "Content of /etc/redhat-release: {{ redhat_release_decoded }}"
+    #   - name: Print what I am
+    #      ansible.builtin.set_fact:
+    #        my_messages: "{{ my_messages + [vwhat_r] }}" 
 
     - name: Gather memory usage
       ansible.builtin.command: free -m
       register: memory_usage
 
-    - name: Print memory usage
-      ansible.builtin.debug:
-        var: memory_usage.stdout_lines
+    #- name: Print memory usage
+    #  ansible.builtin.debug:
+    #    var: memory_usage.stdout_lines
 
     - name: Gather disk usage
       ansible.builtin.command: df -h
       register: disk_usage
 
-    - name: Print disk usage
-      ansible.builtin.debug:
-        var: disk_usage.stdout_lines
+    #- name: Print disk usage
+    #  ansible.builtin.debug:
+    #    var: disk_usage.stdout_lines
 
-    - name: Gather CPU details
-      ansible.builtin.command: lscpu
-      register: cpu_info
+    - name: Add bottom banner
+      ansible.builtin.set_fact:
+        my_messages: "{{ my_messages + ['==========================================================='] }}"
 
-    - name: Print CPU details
+    - name: Print messages
       ansible.builtin.debug:
-        var: cpu_info.stdout_lines
-
-    - name: Print CPUS
-      ansible.builtin.debug:
-        msg: "CPUs: {{ ansible_facts['processor_vcpus'] }}"
+        var: my_messages
