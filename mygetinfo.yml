@@ -75,10 +75,34 @@
     #       ansible.builtin.set_fact:
     #         system_info: "{{ system_info + [vwhat_r] }}"
 
-    - name: Gather memory usage
-      ansible.builtin.command: free -m
-      register: memory_usage
-      changed_when: false
+    - name: Gather memory usage from ansible
+      when: ansible_facts['ansible_memtotal_mb'] is defined
+      block:
+        - name: Display the total memory
+          ansible.builtin.set_fact:
+            total_memory: "  Total Memory: {{ ansible_facts['ansible_memtotal_mb'] }} MB"
+        - name: Add total_memory to system_info
+          ansible.builtin.set_fact:
+            system_info: "{{ system_info + [total_memory] }}"
+
+    - name: Gather memory usage from system
+      when: ansible_facts['ansible_memtotal_mb'] is undefined
+      block:
+        - name: Get memor usage from system free command
+          ansible.builtin.shell: |
+              set -o pipefail
+              free -g | grep Mem | awk '{ print $3 " of " $2 " GB used"}'
+          register: memory_usage
+          changed_when: false
+        - name: Set total memory from system
+          ansible.builtin.set_fact:
+            total_memory: "  Total Memory: {{ memory_usage.stdout }}"
+        - name: Add total_memory to system_info
+          ansible.builtin.set_fact:
+            system_info: "{{ system_info + [total_memory] }}"
+      rescue:
+        - name: Recover ansible.builtin.shell
+          ansible.builtin.meta: noop
 
     # - name: Print memory usage
     #   ansible.builtin.debug:
@@ -100,3 +124,5 @@
     - name: Print messages
       ansible.builtin.debug:
         var: system_info
+
+...
